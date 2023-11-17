@@ -3,19 +3,30 @@ import { UserInfo } from "./userinfo";
 
 function App() {
   const [user, setUser] = useState("");
-  const [userData, setUserData] = useState(null)
+  const [userData, setUserData] = useState(null);
+  const [error, setError] = useState(null);
 
-  async function fetchData(e){
-    e.preventDefault()
+  async function fetchData(e) {
+    e.preventDefault();
 
     try {
       const url = `https://api.github.com/users/${user}`;
       const res = await fetch(url);
-      const data = await res.json();
-      console.log(data)
-      setUserData(data)
+
+      if (res.status === 404) {
+        const errorData = await res.json();
+        setError(errorData.message); // Capture the error message
+        setUserData(null); // Reset user data
+      } else {
+        const data = await res.json();
+        setUserData(data);
+        setError(null); // Reset error
+      }
+
+      setUser("");
     } catch (error) {
-      console.log(error)
+      console.log(error);
+      setError("An error occurred while fetching data.");
     }
   }
 
@@ -25,7 +36,10 @@ function App() {
         <h1 className="text-3xl font-bold mb-4">GitHub User Search</h1>
         <form className="flex mb-4" onSubmit={fetchData}>
           <input
-            onChange={(e) => {setUser(e.target.value)}}
+            onChange={(e) => {
+              setUser(e.target.value);
+              setError(null); // Reset error when input changes
+            }}
             value={user}
             type="text"
             placeholder="Search GitHub users"
@@ -33,7 +47,8 @@ function App() {
           />
           <button className="bg-blue-500 text-white p-2 rounded-r">Search</button>
         </form>
-        <UserInfo fetchedData = {userData}/>
+        {error && <p className="text-red-500">{error}</p>} {/* Display error message */}
+        <UserInfo fetchedData={userData} />
       </div>
     </div>
   );
